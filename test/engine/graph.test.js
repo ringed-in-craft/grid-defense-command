@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { buildGraph, isAttackable, isDefendable, emitTraffic, advanceTraffic } from '../../src/engine/graph.js';
 

@@ -35,18 +35,26 @@ intuition genuinely fails on it.
 ```bash
 git clone https://github.com/ringed-in-craft/grid-defense-command.git
 cd grid-defense-command
-npm start          # -> http://localhost:8000
+npm install        # dev tooling only
+npm run dev        # -> http://localhost:5173
 ```
 
 `/` is the range (scenario picker). `/play/blackout/` is the BLACKOUT scenario.
 The live board on the landing page is the real engine running with an auto-defender —
 not a video, not a screenshot.
 
-No dependencies. The dev server is 60 lines of `node:http`.
+```
+npm test                  # vitest — 105 unit tests, 38 scenario + 67 engine
+npm run check             # tsc --noEmit
+npm run build             # dist/site — the deployed range, multi-page, shared chunks
+npm run build:standalone  # dist/blackout.html — one self-contained file, opens offline
+npm run balance           # difficulty report
+npm run smoke             # headless-browser end to end check
+```
 
-Prefer a single file? `npm run bundle` produces `dist/grid-defense-command.html` —
-~42 kB, self-contained, opens straight from the filesystem, no server and no build
-step needed to run it.
+**There are no runtime dependencies.** Vite, TypeScript and Vitest are build and
+test tooling only; the shipped output is HTML, CSS and JavaScript with nothing to
+install. The single-file build opens straight from the filesystem.
 
 `Controls:` click a node, then `1`–`6` (or the buttons). `Space` pauses,
 `Esc` deselects. Sound cues are synthesised with WebAudio — no audio files — and are
@@ -136,7 +144,8 @@ Simulation model in [`docs/MODEL.md`](docs/MODEL.md).
 
 ## Architecture
 
-Two layers, cut along the seam that lets more scenarios exist.
+Two layers, cut along the seam that lets more scenarios exist, plus the tooling
+that builds and ships them.
 
 ```
 index.html           the range — scenario picker, with the live engine on the hero
@@ -169,7 +178,9 @@ src/main.js          loop, input, wiring, seeded URLs
 test/                scenario invariants (power, threats, actions, difficulty)
 test/engine/         engine invariants, driven by a non-grid fixture
 test/browser-smoke.html   end-to-end: real clicks, real buttons, real loop
-scripts/             serve.mjs · bundle.mjs · smoke.mjs · balance.mjs
+scripts/             serve.mjs · smoke.mjs · balance.mjs
+vite.config.ts       dev server, multi-page site build, single-file build, tests
+tsconfig.json        strict; `allowJs` currently on while the sources migrate
 ```
 
 A scenario is a **pack**: topology, threat catalogue, action set, two solver
@@ -187,10 +198,8 @@ a substation mesh, the engine genuinely knows nothing about either domain.
 ## Tests
 
 ```bash
-npm test                 # 105 unit tests, node:test, no dependencies
-                         #   38 scenario (grid) + 67 engine
-npm start                # then open /test/browser-smoke.html for the 27-check
-                         # end-to-end run (real canvas clicks, real loop)
+npm test                 # 105 unit tests (vitest), 38 scenario + 67 engine
+npm run smoke            # 27-check browser end-to-end run (real canvas clicks)
 ```
 
 The scenario tests encode the invariants that matter: that the power model is

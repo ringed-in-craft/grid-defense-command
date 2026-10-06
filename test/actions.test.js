@@ -4,7 +4,7 @@
  * will actually accept. A drift between those two is a UI bug by construction.
  */
 
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import {
   createState,

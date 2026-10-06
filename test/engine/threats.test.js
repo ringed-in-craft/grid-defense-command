@@ -5,7 +5,7 @@
  * this passes, the threat engine is genuinely domain-independent.
  */
 
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { createRun } from '../../src/engine/run.js';
 import { spawnThreat, advanceThreat, spreadThreat } from '../../src/engine/threats.js';

@@ -1,15 +1,28 @@
 {
   "name": "grid-defense-command",
   "version": "1.0.0",
-  "description": "A browser simulation that teaches how power-grid intrusions actually work, and which defences actually hold.",
+  "description": "Blackout — an ICS/OT defence simulation, the first scenario on the Watchfloor engine. A browser cyber range for defenders.",
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "start": "node scripts/serve.mjs",
-    "test": "node --test test/*.test.js test/engine/*.test.js",
+    "dev": "vite",
+    "build": "vite build",
+    "build:standalone": "STANDALONE=1 vite build && cp dist/standalone/play/blackout/index.html dist/blackout.html && echo 'single-file build -> dist/blackout.html'",
+    "preview": "vite preview --port 8000",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "tsc --noEmit",
     "smoke": "node scripts/smoke.mjs",
-    "bundle": "node scripts/bundle.mjs",
-    "balance": "node scripts/balance.mjs"
+    "smoke:build": "node scripts/smoke.mjs --built",
+    "balance": "node scripts/balance.mjs",
+    "serve": "node scripts/serve.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21",
+    "vite-plugin-singlefile": "^2.3.3",
+    "vitest": "^2.1.9"
   },
   "engines": {
     "node": ">=20.11"
@@ -20,6 +33,7 @@
     "critical-infrastructure",
     "mitre-attack",
     "simulation",
+    "cyber-range",
     "canvas"
   ]
 }

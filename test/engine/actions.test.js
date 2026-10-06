@@ -8,7 +8,7 @@
  * disabled and works.
  */
 
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { createRun } from '../../src/engine/run.js';
 import { resolveAction, canResolve, orderActions } from '../../src/engine/actions.js';

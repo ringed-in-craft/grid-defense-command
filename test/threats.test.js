@@ -4,7 +4,7 @@
  * far in the future, so exactly one threat is under observation.
  */
 
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { createState, step, isBlind } from '../src/sim.js';
 

@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: unit tests (node ${{ matrix.node }})
+    name: tests (node ${{ matrix.node }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -19,28 +19,44 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      # There are no dependencies, so there is nothing to install.
-      - run: node --test test/*.test.js test/engine/*.test.js
+          cache: npm
+      - run: npm ci
+      - name: unit tests
+        run: npx vitest run
 
-  bundle:
-    name: single-file bundle builds and is standalone
+  typecheck:
+    name: typecheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node scripts/bundle.mjs
-      - name: bundle must not contain module syntax
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  build:
+    name: site build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx vite build
+      - name: build produced the expected pages
         run: |
-          if grep -q 'type="module"' dist/grid-defense-command.html; then
-            echo "bundle still references modules"; exit 1
-          fi
-          test -s dist/grid-defense-command.html
+          test -s dist/site/index.html
+          test -s dist/site/play/blackout/index.html
+      - name: single-file build
+        run: npm run build:standalone
       - uses: actions/upload-artifact@v4
         with:
-          name: grid-defense-command-single-file
-          path: dist/grid-defense-command.html
+          name: watchfloor-site
+          path: dist/site
 
   smoke:
     name: browser smoke test

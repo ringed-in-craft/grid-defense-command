@@ -7,7 +7,7 @@
  * without carrying it).
  */
 
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { createState, powerFlow, isBlind } from '../src/sim.js';
 

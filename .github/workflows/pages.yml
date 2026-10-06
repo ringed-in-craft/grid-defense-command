@@ -22,19 +22,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      # Ship the single-file build alongside the module version, so the Pages
-      # site works and the release artifact is the same bytes users can download.
-      - run: node scripts/bundle.mjs
+          cache: npm
+      - run: npm ci
+
+      # the deployed range
+      - run: npx vite build
+
+      # and the shareable single-file build, published alongside it
+      - run: npm run build:standalone
+
       - name: assemble site
         run: |
-          mkdir -p _site/dist
-          cp index.html _site/
-          cp -r play src docs _site/
-          cp dist/grid-defense-command.html _site/dist/
+          # docs are plain markdown linked from the pages, so they ship as-is
+          cp -r docs dist/site/docs
+          mkdir -p dist/site/dist
+          cp dist/blackout.html dist/site/dist/
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: dist/site
 
   deploy:
     needs: build

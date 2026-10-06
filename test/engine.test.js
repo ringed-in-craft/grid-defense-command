@@ -4,7 +4,7 @@
  * seeds because the simulation is stochastic by design.
  */
 
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { createState, step, BUDGET_CAP } from '../src/sim.js';
 import { simulate, competentPolicy, actOnThreats, seeds, meanOver } from './helpers.js';

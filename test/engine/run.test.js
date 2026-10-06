@@ -6,7 +6,7 @@
  * trees runs on entirely the same machinery as a power-grid intrusion.
  */
 
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { createRun, step, applyAction, canApply, ENGINE_VERSION } from '../../src/engine/run.js';
 import { ORCHARD_PACK } from './fixture.js';
