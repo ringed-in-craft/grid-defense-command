@@ -45,16 +45,16 @@ export function spawnThreat(run) {
   // realistic, and it stops hardening from making the game trivial.
   const shrug = run.config.spawn?.shrugOff;
   if (shrug && target[shrug.field] >= shrug.levels && run.rng() < shrug.chance) {
-    events.push(event('ok', target.id, `${target.name} shrugged off ${spec.name} (${shrug.label})`));
+    events.push(event('ok', target.id, `${target.name} shrugged off ${spec.name} (${shrug.label})`, 'ui'));
     return events;
   }
 
   target.threat = { id, progress: 0 };
   emitTraffic(run, run.config.spawn?.origin ?? target.id, target.id);
-  events.push(event('bad', target.id, `${spec.name} hitting ${target.name}`));
+  events.push(event('bad', target.id, `${spec.name} hitting ${target.name}`, 'alert'));
   if (!run.seen[id]) {
     run.seen[id] = 1;
-    events.push(event('learn', target.id, spec.brief));
+    events.push(event('learn', target.id, spec.brief, null));
   }
   return events;
 }
@@ -99,7 +99,7 @@ export function advanceThreat(run, node, dt, blind) {
     node.online = false;
     node.threat = null;
     run.blackouts += 1;
-    events.push(event('bad', node.id, `${node.name} knocked offline`));
+    events.push(event('bad', node.id, `${node.name} knocked offline`, 'breach'));
   }
 
   return events;

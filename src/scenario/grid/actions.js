@@ -32,7 +32,7 @@ export const ACTIONS = {
     guard: (run, node) => node.online && node.hardening < HARDEN_CAP,
     apply: (run, node, api) => {
       node.hardening += 1;
-      api.emit('ok', `Hardened ${node.name} (level ${node.hardening})`);
+      api.emit('ok', `Hardened ${node.name} (level ${node.hardening})`, 'ui');
     }
   },
 
@@ -45,7 +45,7 @@ export const ACTIONS = {
     guard: (run, node) => node.online,
     apply: (run, node, api) => {
       node.firewall = FIREWALL_SECONDS;
-      api.emit('ok', `Rate-limit up on ${node.name}`);
+      api.emit('ok', `Rate-limit up on ${node.name}`, 'ui');
     }
   },
 
@@ -57,7 +57,7 @@ export const ACTIONS = {
     hint: `-20 · remove threat, +${HUNT_BONUS} score`,
     guard: (run, node) => node.online && !!node.threat,
     apply: (run, node, api) => {
-      api.emit('ok', `Threat hunted down on ${node.name} (+${HUNT_BONUS})`);
+      api.emit('ok', `Threat hunted down on ${node.name} (+${HUNT_BONUS})`, 'contained');
       node.threat = null;
       run.kills += 1;
       run.score += HUNT_BONUS;
@@ -73,7 +73,7 @@ export const ACTIONS = {
     guard: (run, node) => node.online && !node.segmented,
     apply: (run, node, api) => {
       node.segmented = true;
-      api.emit('ok', `Segmented ${node.name} — lateral movement blocked`);
+      api.emit('ok', `Segmented ${node.name} — lateral movement blocked`, 'contained');
     }
   },
 
@@ -88,7 +88,7 @@ export const ACTIONS = {
       node.online = false;
       node.isolation = ISOLATION_SECONDS;
       node.threat = null;
-      api.emit('ok', `Isolated ${node.name} — threat purged, node dark for ${ISOLATION_SECONDS}s`);
+      api.emit('ok', `Isolated ${node.name} — threat purged, node dark for ${ISOLATION_SECONDS}s`, 'contained');
     }
   },
 
@@ -102,7 +102,7 @@ export const ACTIONS = {
     apply: (run, node, api) => {
       node.online = true;
       node.threat = null;
-      api.emit('ok', `Restored ${node.name}`);
+      api.emit('ok', `Restored ${node.name}`, 'ui');
     }
   }
 };

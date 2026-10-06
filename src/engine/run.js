@@ -134,7 +134,9 @@ export function step(run, dt) {
       if (!rule) continue;
       if (rule.set) Object.assign(node, rule.set);
       if (rule.emit) {
-        events.push(event(rule.emit.type, node.id, rule.emit.message.replace('{name}', node.name)));
+        events.push(
+          event(rule.emit.type, node.id, rule.emit.message.replace('{name}', node.name), rule.emit.cue ?? null)
+        );
       }
     }
 
@@ -150,7 +152,7 @@ export function step(run, dt) {
 
   if (isLost(run)) {
     run.status = 'lost';
-    events.push(event('bad', null, config.objective.lostMessage));
+    events.push(event('bad', null, config.objective.lostMessage, 'lost'));
   }
 
   run.events = events;

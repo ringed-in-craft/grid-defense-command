@@ -56,8 +56,12 @@ export function resolveAction(run, nodeId, actionId) {
   /** @type {import('./events.js').SimEvent[]} */
   const events = [];
   const api = {
-    /** @param {'bad'|'ok'|'learn'} type @param {string} message */
-    emit: (type, message) => events.push(event(type, node.id, message))
+    /**
+     * @param {'bad'|'ok'|'learn'} type
+     * @param {string} message
+     * @param {string|null} [cue] optional presentation hint, see events.js
+     */
+    emit: (type, message, cue = null) => events.push(event(type, node.id, message, cue))
   };
   spec.apply(run, node, api);
 

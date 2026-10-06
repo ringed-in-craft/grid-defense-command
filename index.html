@@ -2,102 +2,299 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Grid Defense Command</title>
-<meta name="description" content="A browser simulation of power-grid intrusion and defence, modelled on real ICS incidents and mapped to MITRE ATT&CK for ICS.">
-<meta name="color-scheme" content="light dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Watchfloor — a browser cyber range for defenders</title>
+<meta name="description" content="Defensive security simulation you can play in the browser. Pick a scenario, defend under pressure, and read the debrief. Every threat carries real MITRE ATT&CK technique IDs.">
+<meta name="color-scheme" content="dark">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap">
 <style>
-:root{
-  box-sizing:border-box;
-  padding-top:env(safe-area-inset-top,0px);
-  padding-bottom:env(safe-area-inset-bottom,0px);
-  --bg:#e9eef6; --pn:#fff; --ln:#c3cfe2; --tx:#13203a; --mu:#5b6b8a;
-  --pw:#c77700; --bad:#d11d4a; --df:#0a7fae; --dim:#9fb0cc;
-}
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){--bg:#060a16;--pn:#0c1426;--ln:#1d2c4b;--tx:#dbe6ff;--mu:#7f93bb;--pw:#ffb53d;--bad:#ff3d6e;--df:#3fd8ff;--dim:#2a3a5c}
-}
-:root[data-theme="dark"]{--bg:#060a16;--pn:#0c1426;--ln:#1d2c4b;--tx:#dbe6ff;--mu:#7f93bb;--pw:#ffb53d;--bad:#ff3d6e;--df:#3fd8ff;--dim:#2a3a5c}
-*,*:before,*:after{box-sizing:inherit}
-html,body{margin:0;background:var(--bg);color:var(--tx);
-  font:15px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-.app{max-width:1180px;margin:0 auto;padding:12px;display:flex;flex-direction:column;gap:10px}
-.hud{display:flex;flex-wrap:wrap;gap:8px}
-.st{flex:1 1 120px;background:var(--pn);border:1px solid var(--ln);border-radius:8px;padding:6px 10px}
-.st small{color:var(--mu);display:block;font-size:12px}
-.st b{font-size:20px;font-variant-numeric:tabular-nums}
-.bar{height:5px;background:var(--ln);border-radius:3px;margin-top:3px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--pw);width:100%;transition:width .15s linear}
-.main{display:flex;flex-wrap:wrap;gap:10px}
-.mapw{flex:2 1 560px;position:relative;background:var(--pn);border:1px solid var(--ln);border-radius:10px;overflow:hidden}
-canvas{display:block;width:100%;height:min(64vh,540px);cursor:pointer;touch-action:manipulation}
-.side{flex:1 1 300px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.box{background:var(--pn);border:1px solid var(--ln);border-radius:10px;padding:10px}
-.box h3{margin:0 0 4px;font-size:17px}
-.acts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
-button{font:inherit;color:var(--tx);background:transparent;border:1px solid var(--df);border-radius:6px;
-  padding:7px 8px;cursor:pointer;text-align:left}
-button:hover:not(:disabled){background:color-mix(in srgb,var(--df) 18%,transparent)}
-button:disabled{opacity:.35;cursor:not-allowed}
-button:focus-visible{outline:2px solid var(--pw);outline-offset:2px}
-button small{display:block;color:var(--mu);font-size:12px}
-#blind{border-color:var(--bad);color:var(--bad);border-left-width:3px;font-size:13px}
-#feed{max-height:230px;overflow:auto;display:flex;flex-direction:column;gap:5px}
-#feed div{font-size:13px;padding:5px 8px;border-left:3px solid var(--ln)}
-#feed .bad{border-color:var(--bad)}
-#feed .ok{border-color:var(--df)}
-#feed .learn{border-color:var(--pw);background:color-mix(in srgb,var(--pw) 10%,transparent)}
-.ov{position:absolute;inset:0;background:color-mix(in srgb,var(--bg) 88%,transparent);
-  display:flex;align-items:center;justify-content:center;padding:18px;text-align:center}
-.ov>div{max-width:480px}
-.ov h1{margin:0 0 8px;font-size:28px}
-.ov p{color:var(--mu);margin:6px 0;overflow-wrap:anywhere}
-.ov button{text-align:center;background:var(--pw);color:#000;border-color:var(--pw);font-weight:700;padding:10px 22px;margin-top:10px}
-.hide{display:none}
-.foot{color:var(--mu);font-size:12px;display:flex;gap:12px;flex-wrap:wrap}
-.foot a{color:var(--df)}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+  :root{
+    --bg:#060a16; --pn:#0c1426; --ln:#1d2c4b; --tx:#dbe6ff; --mu:#7f93bb;
+    --pw:#ffb53d; --bad:#ff3d6e; --df:#3fd8ff; --dim:#2a3a5c;
+    --wrap:1120px;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--tx);
+    font:16px/1.6 "Chakra Petch",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  .wrap{max-width:var(--wrap);margin:0 auto;padding:0 20px}
+
+  /* ---------- top bar ---------- */
+  .top{display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:18px 0;position:relative;z-index:3}
+  .brand{display:flex;align-items:baseline;gap:10px}
+  .brand b{font-size:22px;letter-spacing:.16em;font-weight:700}
+  .brand span{font-size:11px;letter-spacing:.22em;color:var(--mu);text-transform:uppercase}
+  .top nav{display:flex;gap:18px;font-size:14px}
+  .top nav a{color:var(--mu);text-decoration:none;border-bottom:1px solid transparent;padding-bottom:2px}
+  .top nav a:hover{color:var(--tx);border-color:var(--pw)}
+
+  /* ---------- hero with the live board ---------- */
+  .hero{position:relative;overflow:hidden;border:1px solid var(--ln);border-radius:14px;
+    min-height:min(74vh,620px);display:flex;align-items:center}
+  #board{position:absolute;inset:0;width:100%;height:100%;opacity:.42}
+  .hero::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:
+      radial-gradient(120% 80% at 15% 40%, rgba(6,10,22,.94) 0%, rgba(6,10,22,.55) 45%, rgba(6,10,22,.15) 100%),
+      linear-gradient(to top, rgba(6,10,22,.95), rgba(6,10,22,0) 55%)}
+  .hero-inner{position:relative;z-index:2;padding:clamp(24px,5vw,64px);max-width:760px}
+  .live{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--df);border:1px solid rgba(63,216,255,.3);
+    background:rgba(63,216,255,.07);border-radius:999px;padding:5px 12px}
+  .live i{width:7px;height:7px;border-radius:50%;background:var(--df);animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+  h1{margin:18px 0 0;font-size:clamp(34px,6vw,60px);line-height:1.04;letter-spacing:-.01em}
+  h1 em{font-style:normal;color:var(--pw)}
+  .sub{margin:16px 0 0;font-size:clamp(15px,1.7vw,19px);color:#a9b8d6;max-width:60ch}
+  .cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+  .btn{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-weight:700;
+    border-radius:8px;padding:13px 24px;font-size:15px;border:1px solid var(--pw);
+    background:var(--pw);color:#10100a;transition:transform .12s ease,filter .12s ease}
+  .btn:hover{transform:translateY(-2px);filter:brightness(1.08)}
+  .btn.ghost{background:transparent;color:var(--tx);border-color:var(--ln)}
+  .btn.ghost:hover{border-color:var(--df);background:rgba(63,216,255,.08)}
+  .hero-note{margin-top:18px;font-size:12.5px;color:var(--mu);max-width:56ch}
+
+  /* ---------- section heading ---------- */
+  .sec{margin:64px 0 22px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .sec h2{margin:0;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--mu);font-weight:600}
+  .sec p{margin:0;color:var(--mu);font-size:14px}
+
+  /* ---------- scenario cards ---------- */
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(310px,1fr))}
+  .card{position:relative;border:1px solid var(--ln);border-left:3px solid var(--ln);
+    border-radius:10px;padding:18px 18px 16px;background:linear-gradient(180deg,rgba(12,20,38,.85),rgba(12,20,38,.55));
+    display:flex;flex-direction:column;gap:10px;transition:border-color .15s ease,transform .15s ease}
+  .card.live-card{border-left-color:var(--pw)}
+  .card.live-card:hover{border-left-color:var(--pw);transform:translateY(-3px)}
+  .card h3{margin:0;font-size:19px;letter-spacing:.1em;text-transform:uppercase;display:flex;
+    align-items:center;justify-content:space-between;gap:10px}
+  .card p{margin:0;font-size:14px;color:#a9b8d6}
+  .card .who{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mu)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{font-size:10.5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    border:1px solid var(--ln);border-radius:4px;padding:2px 6px;color:var(--mu)}
+  .state{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;border-radius:999px;
+    padding:3px 9px;border:1px solid var(--ln);color:var(--mu);white-space:nowrap}
+  .state.on{border-color:rgba(255,181,61,.5);color:var(--pw);background:rgba(255,181,61,.1)}
+  .card .go{margin-top:auto;padding-top:6px}
+  .card .go a{font-size:13px;font-weight:700;color:var(--pw);text-decoration:none;border-bottom:1px solid rgba(255,181,61,.4)}
+  .card.soon{opacity:.72}
+
+  /* ---------- footer ---------- */
+  footer{margin:70px 0 40px;padding-top:22px;border-top:1px solid var(--ln);
+    display:flex;flex-wrap:wrap;gap:10px 22px;font-size:12.5px;color:var(--mu)}
+  footer a{text-decoration:none;border-bottom:1px solid var(--ln)}
+  footer a:hover{color:var(--tx);border-color:var(--pw)}
+
+  @media (max-width:640px){
+    .top nav{display:none}
+    .hero{min-height:auto}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<div class="app">
-  <div class="hud">
-    <div class="st"><small>Grid power served</small><b id="sv">100%</b><div class="bar"><i id="svb"></i></div></div>
-    <div class="st"><small>Response budget</small><b id="bd">100</b><div class="bar"><i id="bdb" style="background:var(--df)"></i></div></div>
-    <div class="st"><small>Score</small><b id="sc">0</b></div>
-    <div class="st"><small>Time held</small><b id="tm">0:00</b></div>
-    <div class="st"><small>Seed</small><b id="seed">1</b><div style="color:var(--bad);font-size:12px" id="pauseFlag"></div></div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <b>WATCHFLOOR</b>
+      <span>cyber range</span>
+    </div>
+    <nav>
+      <a href="./play/blackout/">Play</a>
+      <a href="./docs/MODEL.md">Model</a>
+      <a href="./docs/TTP-MAPPING.md">ATT&amp;CK mapping</a>
+      <a href="https://github.com/ringed-in-craft/grid-defense-command">Source</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <canvas id="board" aria-hidden="true"></canvas>
+    <div class="hero-inner">
+      <span class="live"><i></i> live engine — this board is the simulation, running</span>
+      <h1>Defence is a series of <em>uncomfortable trades</em> under time pressure.</h1>
+      <p class="sub">
+        Watchfloor is a browser cyber range for the defending side. Pick a scenario,
+        keep something valuable alive while attackers work it, and read the debrief that
+        tells you exactly which decision cost you. Every threat carries the real
+        MITRE ATT&amp;CK technique IDs behind it.
+      </p>
+      <div class="cta">
+        <a class="btn" href="./play/blackout/">▶ Play BLACKOUT</a>
+        <a class="btn ghost" href="./docs/MODEL.md">Read the model</a>
+      </div>
+      <p class="hero-note">
+        No install, no account, no dependencies. Runs in the tab. Seeds are shareable,
+        so a run you had trouble with is a link you can send someone.
+      </p>
+    </div>
+  </section>
+
+  <div class="sec">
+    <h2>Scenarios</h2>
+    <p>One engine, many scenarios. Each teaches a different defensive trade-off.</p>
   </div>
 
-  <div class="main">
-    <div class="mapw">
-      <canvas id="cv" aria-label="Power grid map. Attackers target nodes; select a node and choose a response."></canvas>
-      <div class="ov" id="ov"></div>
-    </div>
+  <div class="grid">
+    <article class="card live-card">
+      <h3>Blackout <span class="state on">Playable</span></h3>
+      <div class="who">ICS / OT · grid defence</div>
+      <p>
+        Attackers are working a regional power grid. You have six defensive actions and a
+        regenerating budget. The hospital is worth three times a city, the control centre is
+        your only source of sight, and isolating anything cuts the power it carries.
+      </p>
+      <div class="chips">
+        <span class="chip">T0814</span><span class="chip">T0832</span><span class="chip">T0836</span>
+        <span class="chip">T0855</span><span class="chip">T0865</span><span class="chip">T1486</span>
+      </div>
+      <div class="go"><a href="./play/blackout/">▶ Play now</a></div>
+    </article>
 
-    <div class="side">
-      <div class="box">
-        <h3 id="sn">Select a node</h3>
-        <div id="ss" style="color:var(--mu)">Click anything on the map.</div>
-        <div id="blind" class="hide" role="status"></div>
-        <div class="acts" id="acts"></div>
-      </div>
-      <div class="box">
-        <h3>Field log and briefings</h3>
-        <div id="feed" aria-live="polite"></div>
-      </div>
-    </div>
+    <article class="card soon">
+      <h3>Containment <span class="state">In design</span></h3>
+      <div class="who">Ransomware · enterprise</div>
+      <p>
+        Encryption is spreading along file shares. Isolate hosts, kill processes, restore from
+        backup — and live with the fact that the domain controller is more valuable than the
+        three machines you already saved.
+      </p>
+      <div class="chips"><span class="chip">T1486</span><span class="chip">T0826</span><span class="chip">T0859</span></div>
+    </article>
+
+    <article class="card soon">
+      <h3>Signal <span class="state">In design</span></h3>
+      <div class="who">Detection engineering · the blue-team flip</div>
+      <p>
+        You are the analyst. Alerts arrive on a queue, triage costs analyst-time, most of them
+        are noise, and one is a real intrusion progressing while you chase the wrong things.
+        Scored on precision and recall rather than uptime.
+      </p>
+      <div class="chips"><span class="chip">T0814</span><span class="chip">T0832</span></div>
+    </article>
+
+    <article class="card soon">
+      <h3>Killchain <span class="state">In design</span></h3>
+      <div class="who">Purple team · dual perspective</div>
+      <p>
+        Run the intrusion first through an identity graph — tokens, service accounts, delegation.
+        Then the same seeded run replays from the defender's seat, and you have to catch your own
+        moves with the telemetry you just generated.
+      </p>
+      <div class="chips"><span class="chip">T0859</span><span class="chip">T0866</span></div>
+    </article>
+
+    <article class="card soon">
+      <h3>Provenance <span class="state">Concept</span></h3>
+      <div class="who">Supply chain · build pipeline</div>
+      <p>
+        Somewhere between a dependency and a deployed artifact, the thing that shipped is not the
+        thing that was reviewed. Least-privilege CI, signed artifacts, and the fact that the
+        pipeline is a target in its own right.
+      </p>
+      <div class="chips"><span class="chip">T0862</span><span class="chip">T1195</span></div>
+    </article>
   </div>
 
-  <div class="foot">
-    <span>Grid Defense Command</span>
+  <footer>
+    <span>Watchfloor — defensive simulation. Educational only; fictional topologies, no real control systems.</span>
     <a href="./docs/MODEL.md">Simulation model</a>
     <a href="./docs/TTP-MAPPING.md">ATT&amp;CK for ICS mapping</a>
-    <span>Educational simulation — not a real control system.</span>
-  </div>
+    <a href="https://github.com/ringed-in-craft/grid-defense-command">GitHub</a>
+  </footer>
 </div>
 
-<script type="module" src="./src/main.js"></script>
+<script type="module">
+/**
+ * The hero board is not a video and not a screenshot — it is the real engine,
+ * running the real scenario with an auto-defender, rendered by the same canvas
+ * module the game uses. If the simulation had a bug, you would see it here.
+ */
+import { createState, step, applyAction, isBlind } from './src/sim.js';
+import { draw } from './src/render.js';
+
+const canvas = document.getElementById('board');
+const ctx = canvas.getContext('2d');
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let W = 0;
+let H = 0;
+let run = createState(undefined, 4242);
+let clock = 0;
+let actTimer = 0;
+let last = 0;
+
+function resize() {
+  const r = canvas.getBoundingClientRect();
+  const d = window.devicePixelRatio || 1;
+  W = r.width;
+  H = r.height;
+  canvas.width = Math.max(1, Math.round(W * d));
+  canvas.height = Math.max(1, Math.round(H * d));
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+}
+
+/** A cheap auto-defender, so the board stays busy instead of collapsing instantly. */
+function autoDefend(r, dt) {
+  actTimer -= dt;
+  if (actTimer > 0) return;
+  actTimer = 1.1;
+  for (const id in r.nodes) {
+    if (r.nodes[id].threat) {
+      applyAction(r, id, 'hunt');
+      return;
+    }
+    if (!r.nodes[id].online) {
+      applyAction(r, id, 'restore');
+      return;
+    }
+  }
+}
+
+function paint() {
+  draw(ctx, run, {
+    width: W,
+    height: H,
+    time: clock * 1000,
+    selected: null,
+    hover: null,
+    blind: isBlind(run)
+  });
+}
+
+function loop(ts) {
+  const dt = Math.min(0.1, (ts - last) / 1000 || 0);
+  last = ts;
+  clock += dt;
+
+  if (run.status === 'running') {
+    autoDefend(run, dt);
+    step(run, dt);
+  } else {
+    // the difficulty ramp always wins eventually — start a fresh board
+    run = createState(undefined, ((Math.random() * 1e6) | 0) + 1);
+  }
+
+  paint();
+  requestAnimationFrame(loop);
+}
+
+resize();
+addEventListener('resize', () => {
+  resize();
+  if (reduceMotion) paint();
+});
+
+if (reduceMotion) {
+  paint(); // one static frame, no animation
+} else {
+  for (let i = 0; i < 400; i++) step(run, 0.1); // start it mid-run, not empty
+  requestAnimationFrame(loop);
+}
+</script>
 </body>
 </html>

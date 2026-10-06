@@ -35,7 +35,7 @@ export const GRID_CONFIG = {
       // expiry effect; the rate-limit timer just lapses.
       isolation: {
         set: { online: true },
-        emit: { type: 'ok', message: '{name} back online' }
+        emit: { type: 'ok', message: '{name} back online', cue: 'ui' }
       }
     }
   },

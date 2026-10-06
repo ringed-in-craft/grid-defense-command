@@ -38,16 +38,21 @@ cd grid-defense-command
 npm start          # -> http://localhost:8000
 ```
 
+`/` is the range (scenario picker). `/play/blackout/` is the BLACKOUT scenario.
+The live board on the landing page is the real engine running with an auto-defender —
+not a video, not a screenshot.
+
 No dependencies. The dev server is 60 lines of `node:http`.
 
 Prefer a single file? `npm run bundle` produces `dist/grid-defense-command.html` —
 ~42 kB, self-contained, opens straight from the filesystem, no server and no build
 step needed to run it.
 
-**Controls:** click a node, then `1`–`6` (or the buttons). `Space` pauses,
-`Esc` deselects.
+`Controls:` click a node, then `1`–`6` (or the buttons). `Space` pauses,
+`Esc` deselects. Sound cues are synthesised with WebAudio — no audio files — and are
+muted until you turn them on.
 
-**Seeded runs:** every run is deterministic. `index.html#seed=1234` reproduces a
+`Seeds:` every run is deterministic. `play/blackout/#seed=1234` reproduces a
 run exactly, and the loss screen hands you the link. That is how you share a run,
 and it is also what makes the engine testable.
 
@@ -134,6 +139,9 @@ Simulation model in [`docs/MODEL.md`](docs/MODEL.md).
 Two layers, cut along the seam that lets more scenarios exist.
 
 ```
+index.html           the range — scenario picker, with the live engine on the hero
+play/blackout/       the BLACKOUT scenario page
+
 src/engine/          scenario-agnostic machinery. Knows graphs, dwell, cost and
                      objectives — and nothing about power grids.
   rng.js             seeded PRNG; every random decision routes through it
@@ -154,6 +162,7 @@ src/scenario/grid/   the grid game: data plus two solver functions
 
 src/sim.js           the public facade; API unchanged across the split
 src/render.js        canvas drawing — reads state, owns none
+src/audio.js         synthesised sound cues (presentation, not engine)
 src/ui.js            DOM binding; builds action buttons from ACTIONS
 src/main.js          loop, input, wiring, seeded URLs
 

@@ -34,11 +34,17 @@ const ORDER = [
   // --- facade + presentation ---
   'sim.js',
   'render.js',
+  'audio.js',
   'ui.js',
   'main.js'
 ];
 
 let code = '';
+/** @type {Map<string,string>} top-level name -> module that declared it */
+const declared = new Map();
+/** @type {string[]} */
+const collisions = [];
+
 for (const file of ORDER) {
   let src = await readFile(path.join(ROOT, 'src', file), 'utf8');
 
@@ -65,11 +71,33 @@ for (const file of ORDER) {
     throw new Error(`src/${file} still contains module syntax after stripping`);
   }
 
+  // Modules have their own scope; a flat concatenation does not. Two files
+  // declaring the same top-level name would throw "Identifier 'x' has already
+  // been declared" at runtime in the bundle only — catch it at build time.
+  // Only column-0 declarations count, so indented locals are ignored.
+  for (const m of src.matchAll(/^(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)/gm)) {
+    const name = m[1];
+    if (declared.has(name)) {
+      collisions.push(`'${name}' declared in both ${declared.get(name)} and src/${file}`);
+    } else {
+      declared.set(name, `src/${file}`);
+    }
+  }
+
   code += `\n/* ======================= src/${file} ======================= */\n${src}`;
 }
 
-const html = await readFile(path.join(ROOT, 'index.html'), 'utf8');
-const marker = '<script type="module" src="./src/main.js"></script>';
+if (collisions.length) {
+  throw new Error(
+    'Duplicate top-level declarations across modules. The flat bundle wraps\n' +
+      'everything in one scope, so these would throw at runtime. Rename them in\n' +
+      'the source (per-module scope hides this until you bundle):\n  - ' +
+      collisions.join('\n  - ')
+  );
+}
+
+const html = await readFile(path.join(ROOT, 'play', 'blackout', 'index.html'), 'utf8');
+const marker = '<script type="module" src="../../src/main.js"></script>';
 if (!html.includes(marker)) throw new Error('module script tag not found in index.html');
 
 const built = html.replace(

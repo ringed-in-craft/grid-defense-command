@@ -21,6 +21,7 @@ import {
   showOverlay,
   hideOverlay,
   overlayVisible,
+  initSound,
   fmtTime
 } from './ui.js';
 
@@ -206,6 +207,7 @@ window.addEventListener('resize', resize);
 
 resize();
 buildActionButtons(act);
+initSound('mute');
 intro();
 
 const cfg = readConfig();

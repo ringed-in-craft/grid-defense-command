@@ -6,6 +6,7 @@
  */
 
 import { ACTIONS, ACTION_ORDER, canApply, isBlind, THREATS } from './sim.js';
+import { initAudio, cueForEvents, cue, isEnabled, toggle, restore } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -83,7 +84,7 @@ function describe(state, n) {
   return parts.join(' · ');
 }
 
-/** Prepend events to the field log, newest first. */
+/** Prepend events to the field log, newest first, and sound the important ones. */
 export function pushEvents(events) {
   const feed = $('feed');
   for (const e of events) {
@@ -93,6 +94,33 @@ export function pushEvents(events) {
     feed.prepend(div);
   }
   while (feed.children.length > 14) feed.lastElementChild.remove();
+
+  cueForEvents(events);
+}
+
+/**
+ * Wire up the sound toggle. Muted until the player opts in, and the preference
+ * persists, so a reload does not surprise anyone with audio.
+ * @param {string} buttonId
+ */
+export function initSound(buttonId) {
+  const btn = $(buttonId);
+  initAudio();
+  restore();
+  if (!btn) return;
+
+  const paint = () => {
+    const on = isEnabled();
+    btn.textContent = on ? 'Sound: on' : 'Sound: off';
+    btn.setAttribute('aria-pressed', String(on));
+    btn.title = on ? 'Mute sound cues' : 'Enable sound cues';
+  };
+  btn.addEventListener('click', () => {
+    toggle();
+    paint();
+    if (isEnabled()) cue('ui');
+  });
+  paint();
 }
 
 export function clearFeed() {
