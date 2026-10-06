@@ -1,0 +1,25 @@
+{
+  "name": "grid-defense-command",
+  "version": "1.0.0",
+  "description": "A browser simulation that teaches how power-grid intrusions actually work, and which defences actually hold.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test test/*.test.js",
+    "smoke": "node scripts/smoke.mjs",
+    "bundle": "node scripts/bundle.mjs",
+    "balance": "node scripts/balance.mjs"
+  },
+  "engines": {
+    "node": ">=20.11"
+  },
+  "keywords": [
+    "ics",
+    "ot-security",
+    "critical-infrastructure",
+    "mitre-attack",
+    "simulation",
+    "canvas"
+  ]
+}

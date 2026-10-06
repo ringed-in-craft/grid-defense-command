@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Grid Defense Command</title>
+<meta name="description" content="A browser simulation of power-grid intrusion and defence, modelled on real ICS incidents and mapped to MITRE ATT&CK for ICS.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#e9eef6; --pn:#fff; --ln:#c3cfe2; --tx:#13203a; --mu:#5b6b8a;
+  --pw:#c77700; --bad:#d11d4a; --df:#0a7fae; --dim:#9fb0cc;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#060a16;--pn:#0c1426;--ln:#1d2c4b;--tx:#dbe6ff;--mu:#7f93bb;--pw:#ffb53d;--bad:#ff3d6e;--df:#3fd8ff;--dim:#2a3a5c}
+}
+:root[data-theme="dark"]{--bg:#060a16;--pn:#0c1426;--ln:#1d2c4b;--tx:#dbe6ff;--mu:#7f93bb;--pw:#ffb53d;--bad:#ff3d6e;--df:#3fd8ff;--dim:#2a3a5c}
+*,*:before,*:after{box-sizing:inherit}
+html,body{margin:0;background:var(--bg);color:var(--tx);
+  font:15px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.app{max-width:1180px;margin:0 auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.hud{display:flex;flex-wrap:wrap;gap:8px}
+.st{flex:1 1 120px;background:var(--pn);border:1px solid var(--ln);border-radius:8px;padding:6px 10px}
+.st small{color:var(--mu);display:block;font-size:12px}
+.st b{font-size:20px;font-variant-numeric:tabular-nums}
+.bar{height:5px;background:var(--ln);border-radius:3px;margin-top:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--pw);width:100%;transition:width .15s linear}
+.main{display:flex;flex-wrap:wrap;gap:10px}
+.mapw{flex:2 1 560px;position:relative;background:var(--pn);border:1px solid var(--ln);border-radius:10px;overflow:hidden}
+canvas{display:block;width:100%;height:min(64vh,540px);cursor:pointer;touch-action:manipulation}
+.side{flex:1 1 300px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.box{background:var(--pn);border:1px solid var(--ln);border-radius:10px;padding:10px}
+.box h3{margin:0 0 4px;font-size:17px}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+button{font:inherit;color:var(--tx);background:transparent;border:1px solid var(--df);border-radius:6px;
+  padding:7px 8px;cursor:pointer;text-align:left}
+button:hover:not(:disabled){background:color-mix(in srgb,var(--df) 18%,transparent)}
+button:disabled{opacity:.35;cursor:not-allowed}
+button:focus-visible{outline:2px solid var(--pw);outline-offset:2px}
+button small{display:block;color:var(--mu);font-size:12px}
+#blind{border-color:var(--bad);color:var(--bad);border-left-width:3px;font-size:13px}
+#feed{max-height:230px;overflow:auto;display:flex;flex-direction:column;gap:5px}
+#feed div{font-size:13px;padding:5px 8px;border-left:3px solid var(--ln)}
+#feed .bad{border-color:var(--bad)}
+#feed .ok{border-color:var(--df)}
+#feed .learn{border-color:var(--pw);background:color-mix(in srgb,var(--pw) 10%,transparent)}
+.ov{position:absolute;inset:0;background:color-mix(in srgb,var(--bg) 88%,transparent);
+  display:flex;align-items:center;justify-content:center;padding:18px;text-align:center}
+.ov>div{max-width:480px}
+.ov h1{margin:0 0 8px;font-size:28px}
+.ov p{color:var(--mu);margin:6px 0;overflow-wrap:anywhere}
+.ov button{text-align:center;background:var(--pw);color:#000;border-color:var(--pw);font-weight:700;padding:10px 22px;margin-top:10px}
+.hide{display:none}
+.foot{color:var(--mu);font-size:12px;display:flex;gap:12px;flex-wrap:wrap}
+.foot a{color:var(--df)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hud">
+    <div class="st"><small>Grid power served</small><b id="sv">100%</b><div class="bar"><i id="svb"></i></div></div>
+    <div class="st"><small>Response budget</small><b id="bd">100</b><div class="bar"><i id="bdb" style="background:var(--df)"></i></div></div>
+    <div class="st"><small>Score</small><b id="sc">0</b></div>
+    <div class="st"><small>Time held</small><b id="tm">0:00</b></div>
+    <div class="st"><small>Seed</small><b id="seed">1</b><div style="color:var(--bad);font-size:12px" id="pauseFlag"></div></div>
+  </div>
+
+  <div class="main">
+    <div class="mapw">
+      <canvas id="cv" aria-label="Power grid map. Attackers target nodes; select a node and choose a response."></canvas>
+      <div class="ov" id="ov"></div>
+    </div>
+
+    <div class="side">
+      <div class="box">
+        <h3 id="sn">Select a node</h3>
+        <div id="ss" style="color:var(--mu)">Click anything on the map.</div>
+        <div id="blind" class="hide" role="status"></div>
+        <div class="acts" id="acts"></div>
+      </div>
+      <div class="box">
+        <h3>Field log and briefings</h3>
+        <div id="feed" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>Grid Defense Command</span>
+    <a href="./docs/MODEL.md">Simulation model</a>
+    <a href="./docs/TTP-MAPPING.md">ATT&amp;CK for ICS mapping</a>
+    <span>Educational simulation — not a real control system.</span>
+  </div>
+</div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

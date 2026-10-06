@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>browser smoke test</title>
+<style>
+  body{font:13px ui-monospace,monospace;background:#111;color:#eee;margin:0;padding:8px}
+  iframe{width:1000px;height:640px;border:1px solid #444}
+  pre{white-space:pre-wrap}
+</style>
+</head>
+<body>
+<iframe id="f" src="../index.html" title="grid defense command under test"></iframe>
+<pre id="out">running...</pre>
+<script>
+/**
+ * End-to-end browser smoke test.
+ *
+ * Loads the real index.html in a same-origin iframe and drives it: real canvas
+ * MouseEvents, real button clicks, the real render/tick loop. Frames are driven
+ * explicitly through __gdc.frame() because requestAnimationFrame does not run
+ * reliably under headless virtual-time testing — the code path exercised is
+ * identical to the rAF one.
+ *
+ * Results print below and the summary goes in document.title, so a headless
+ * --dump-dom run can read PASS/FAIL.
+ */
+const results = [];
+function check(name, cond, detail) {
+  results.push({ name, ok: !!cond, detail: detail === undefined ? '' : String(detail) });
+}
+
+const frameEl = document.getElementById('f');
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+frameEl.addEventListener('load', async () => {
+  const win = frameEl.contentWindow;
+  const doc = frameEl.contentDocument;
+
+  try {
+    await sleep(250);
+    const g = () => win.__gdc;
+    const h = (dt, n = 1) => { for (let i = 0; i < n; i++) g().frame(dt); };
+
+    // --- boot ---------------------------------------------------------------
+    check('boot: automation hook exposed', !!win.__gdc);
+    check('boot: overlay shown', !doc.getElementById('ov').classList.contains('hide'));
+    check('boot: six actions built from ACTIONS', doc.querySelectorAll('#acts button').length === 6,
+      doc.querySelectorAll('#acts button').length);
+    check('boot: starts paused behind the intro',
+      g().state.status === 'running' && g().state.t === 0);
+
+    h(0.1, 3);
+    check('intro: clock does not advance while the overlay is up', g().state.t === 0,
+      `t=${g().state.t}`);
+
+    // --- start --------------------------------------------------------------
+    doc.getElementById('go').click();
+    check('start: overlay dismissed', doc.getElementById('ov').classList.contains('hide'));
+    h(0.1, 15);
+    check('start: simulation advances', g().state.t > 1.4, `t=${g().state.t.toFixed(2)}`);
+    check('start: HUD clock updated', doc.getElementById('tm').textContent !== '0:00',
+      doc.getElementById('tm').textContent);
+
+    // --- real canvas click selects a node -----------------------------------
+    const st = g().state;
+    const target = Object.keys(st.nodes).find((id) => st.nodes[id].type === 'sub');
+    const rect = doc.getElementById('cv').getBoundingClientRect();
+    const dims = g().dimensions;
+    doc.getElementById('cv').dispatchEvent(new win.MouseEvent('click', {
+      clientX: rect.left + st.nodes[target].x * dims.width,
+      clientY: rect.top + st.nodes[target].y * dims.height,
+      bubbles: true
+    }));
+    check('click: canvas click selected the node', g().selected === target,
+      `selected=${g().selected}`);
+    h(0.05);
+    check('select: detail panel names the node',
+      doc.getElementById('sn').textContent === st.nodes[target].name,
+      doc.getElementById('sn').textContent);
+    check('select: harden button is enabled for a live node',
+      doc.getElementById('act-harden').disabled === false);
+
+    // --- actions through the real UI ----------------------------------------
+    g().pause(true);
+    const budgetBefore = st.budget;
+    const hardenBefore = st.nodes[target].hardening;
+    doc.getElementById('act-harden').click();
+    check('action: harden incremented the level',
+      st.nodes[target].hardening === hardenBefore + 1);
+    check('action: harden charged 20 budget', st.budget === budgetBefore - 20,
+      `${budgetBefore} -> ${st.budget}`);
+    check('action: field log received an entry', doc.getElementById('feed').children.length > 0);
+
+    const h2 = st.nodes[target].hardening;
+    win.dispatchEvent(new win.KeyboardEvent('keydown', { key: '1', bubbles: true }));
+    check('keyboard: key 1 fires the selected action', st.nodes[target].hardening === h2 + 1);
+
+    // --- a hostile action must be refused through the UI --------------------
+    const gens = Object.keys(st.nodes).filter((id) => st.nodes[id].type === 'gen');
+    g().select(gens[0]);
+    h(0.05);
+    check('guard: rate-limit is offered on a clean generator',
+      doc.getElementById('act-ratelimit').disabled === false);
+    check('guard: hunt is refused when there is no threat',
+      doc.getElementById('act-hunt').disabled === true);
+
+    // --- the control centre is your eyes ------------------------------------
+    st.nodes.SOC.online = false;
+    h(0.05);
+    check('blind: banner shown when the control centre goes dark',
+      !doc.getElementById('blind').classList.contains('hide'));
+    check('blind: simulation reports blind', win.__gdc.state.nodes.SOC.online === false);
+
+    st.nodes.SOC.online = true;
+    h(0.05);
+    check('blind: banner clears when the feed returns',
+      doc.getElementById('blind').classList.contains('hide'));
+
+    // --- losing -------------------------------------------------------------
+    g().pause(false);
+    for (const id of gens) st.nodes[id].online = false;
+    h(0.2);
+    check('loss: status flips to lost', g().state.status === 'lost');
+    h(0.05);
+    check('loss: overlay reappears', !doc.getElementById('ov').classList.contains('hide'));
+    check('loss: score and time are reported',
+      /score|scored/i.test(doc.getElementById('ov').textContent));
+    check('loss: shareable seeded link offered',
+      doc.getElementById('ov').textContent.includes('#seed='),
+      doc.getElementById('ov').textContent.slice(-60));
+
+    // --- restart ------------------------------------------------------------
+    doc.getElementById('go').click();
+    check('restart: fresh run at full service', g().state.service === 1);
+    check('restart: clock reset', g().state.t === 0, g().state.t);
+    h(0.1, 3);
+    check('restart: runs again', g().state.t > 0.2, g().state.t.toFixed(2));
+  } catch (err) {
+    check('harness: completed without throwing', false, (err && err.message) || err);
+  }
+
+  const passed = results.filter((r) => r.ok).length;
+  const failed = results.length - passed;
+  document.getElementById('out').textContent =
+    results
+      .map((r) => `${r.ok ? 'PASS' : 'FAIL'}  ${r.name}${r.detail ? '  <' + r.detail + '>' : ''}`)
+      .join('\n') + `\n\n${passed}/${results.length} passed` + (failed ? ` — ${failed} FAILED` : '');
+
+  const failedSummary = results
+    .filter((r) => !r.ok)
+    .map((r) => `${r.name}${r.detail ? ' [' + r.detail + ']' : ''}`)
+    .join(' ~~ ');
+  document.title =
+    `SMOKE ${failed === 0 ? 'PASS' : 'FAIL'} ${passed}/${results.length}` +
+    (failedSummary ? ` :: ${failedSummary}` : '');
+});
+</script>
+</body>
+</html>
