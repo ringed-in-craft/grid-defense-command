@@ -13,7 +13,30 @@ import path from 'node:path';
 const ROOT = path.resolve(import.meta.dirname, '..');
 
 // Dependency order matters: each module only uses names defined above it.
-const ORDER = ['rng.js', 'threats.js', 'scenarios.js', 'sim.js', 'render.js', 'ui.js', 'main.js'];
+// Engine first (it depends on nothing scenario-specific), then the scenario,
+// then the facade, then the presentation layer.
+const ORDER = [
+  // --- engine: scenario-agnostic machinery ---
+  'engine/rng.js',
+  'engine/events.js',
+  'engine/graph.js',
+  'engine/resources.js',
+  'engine/objective.js',
+  'engine/threats.js',
+  'engine/actions.js',
+  'engine/run.js',
+  // --- scenario: the grid game as data + solvers ---
+  'scenario/grid/topology.js',
+  'scenario/grid/threats.js',
+  'scenario/grid/flow.js',
+  'scenario/grid/actions.js',
+  'scenario/grid/index.js',
+  // --- facade + presentation ---
+  'sim.js',
+  'render.js',
+  'ui.js',
+  'main.js'
+];
 
 let code = '';
 for (const file of ORDER) {
@@ -29,6 +52,10 @@ for (const file of ORDER) {
     );
   }
 
+  // Strip module syntax. Re-exports must go FIRST and are matched without
+  // line anchors, because a re-export list may span several lines — and
+  // `[^}]*` matches newlines, so this handles both forms.
+  src = src.replace(/^export\s*(?:\*|\{[^}]*\})\s*from\s*['"][^'"]*['"];?/gm, '');
   src = src.replace(/^import\s+[^;]*;\s*$/gm, '');
   src = src.replace(/^export\s+(const|let|var|function|class)\s/gm, '$1 ');
   src = src.replace(/^export\s*\{[^}]*\};?\s*$/gm, '');

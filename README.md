@@ -129,47 +129,69 @@ Simulation model in [`docs/MODEL.md`](docs/MODEL.md).
 
 ---
 
-## Layout
+## Architecture
+
+Two layers, cut along the seam that lets more scenarios exist.
 
 ```
-src/
-  rng.js         seeded PRNG — every random decision routes through it
-  threats.js     threat catalogue + ATT&CK mapping (data)
-  scenarios.js   grid topologies (data)
-  sim.js         the engine: pure, DOM-free, deterministic
-  render.js      canvas drawing, reads state, owns none
-  ui.js          DOM binding, generates action buttons from ACTIONS
-  main.js        loop, input, wiring, seeded URLs
-test/
-  power.test.js     electrical invariants (redundancy, sinks, control-centre feed)
-  threats.test.js   dwell, escalation, lateral movement, each counter
-  actions.test.js   costs, caps, and canApply/applyAction agreement
-  engine.test.js    determinism + difficulty guarantees
-  browser-smoke.html  end-to-end: real clicks, real buttons, real loop
-scripts/
-  serve.mjs      zero-dep static server
-  bundle.mjs     single-file build
-  balance.mjs    difficulty report
+src/engine/          scenario-agnostic machinery. Knows graphs, dwell, cost and
+                     objectives — and nothing about power grids.
+  rng.js             seeded PRNG; every random decision routes through it
+  events.js          the event contract — how the engine talks to any UI
+  graph.js           assets, links, adjacency, declared per-node state
+  resources.js       the budget pool
+  objective.js       score accrual + loss predicate
+  threats.js         seeding, dwell escalation, lateral movement
+  actions.js         guard -> charge -> apply, plus the canApply invariant
+  run.js             createRun / step / applyAction — the orchestrator
+
+src/scenario/grid/   the grid game: data plus two solver functions
+  topology.js        the Harbor region mesh (data)
+  threats.js         threat catalogue + ATT&CK for ICS mapping (data)
+  actions.js         the six defensive actions
+  flow.js            powerFlow (the `flow` solver) and isBlind (the `senses` solver)
+  index.js           assembles the pack, plus the tuning constants
+
+src/sim.js           the public facade; API unchanged across the split
+src/render.js        canvas drawing — reads state, owns none
+src/ui.js            DOM binding; builds action buttons from ACTIONS
+src/main.js          loop, input, wiring, seeded URLs
+
+test/                scenario invariants (power, threats, actions, difficulty)
+test/engine/         engine invariants, driven by a non-grid fixture
+test/browser-smoke.html   end-to-end: real clicks, real buttons, real loop
+scripts/             serve.mjs · bundle.mjs · smoke.mjs · balance.mjs
 ```
 
-The engine has **no DOM reference anywhere**. That is what lets the whole thing be
-tested headlessly, and it is the single most important structural difference from the
-single-file prototype this started as.
+A scenario is a **pack**: topology, threat catalogue, action set, two solver
+functions (`flow` → service ratio, `senses` → operator blindness) and the numbers.
+The engine reads nothing else, and it holds no DOM, canvas or timing reference.
+
+`test/engine/` is what proves the split is real rather than cosmetic. It runs the
+engine against an **orchard** fixture — fruit trees, a blight, "trimming" instead of
+hardening — where no node type, threat or action shares a name with the grid scenario.
+If a blight spreading across trees runs on the same machinery as spearphishing across
+a substation mesh, the engine genuinely knows nothing about either domain.
 
 ---
 
 ## Tests
 
 ```bash
-npm test                 # 38 unit tests, node:test, no dependencies
+npm test                 # 105 unit tests, node:test, no dependencies
+                         #   38 scenario (grid) + 67 engine
 npm start                # then open /test/browser-smoke.html for the 27-check
                          # end-to-end run (real canvas clicks, real loop)
 ```
 
-The unit tests encode the invariants that matter: that the power model is electrically
-coherent, that lateral movement only ever crosses an edge, that a segmented node really
-does block infection, that `canApply` (which drives button state) can never disagree
-with `applyAction` (which mutates state), and that the same seed reproduces a run exactly.
+The scenario tests encode the invariants that matter: that the power model is
+electrically coherent, that lateral movement only ever crosses an edge, that a
+segmented node really does block infection, that `canApply` (which drives button
+state) can never disagree with `applyAction` (which mutates state), and that the same
+seed reproduces a run exactly.
+
+The engine tests run the same assertions against a fixture that shares nothing with
+this game but the machinery — see the Architecture section.
 
 The browser smoke test loads the real `index.html` in an iframe and drives it —
 dispatching actual `MouseEvent`s at the canvas and clicking actual buttons. It found two

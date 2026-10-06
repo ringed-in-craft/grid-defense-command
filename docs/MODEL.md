@@ -1,10 +1,27 @@
 # Simulation model
 
-This document describes what the engine actually computes. The goal is that you can
-read it, read `src/sim.js`, and find that they agree.
+This document describes what the simulation actually computes. The goal is that you can
+read it, read `src/engine/`, and find that they agree.
+
+## Scope: which layer this describes
+
+The code is split into two layers (see the README's Architecture section):
+
+- **`src/engine/`** — scenario-agnostic machinery: the graph, the threat dwell and
+  spread model, costed action resolution, resources, the objective, and the tick loop.
+  Sections 1–6 below describe this layer, and every statement in them is true of *any*
+  scenario.
+- **`src/scenario/grid/`** — this game specifically: the Harbor region topology, the
+  threat catalogue carrying its ATT&CK for ICS mappings, the six defensive actions, and
+  the two solver functions (`flow` and `senses`). Where this document names substations
+  or power, it is describing the grid scenario's *plug-in*; the engine does not contain
+  those names anywhere in its code.
+
+`src/sim.js` is the public facade over both, and its API is unchanged from before the
+split.
 
 Everything below is deterministic given a seed: all randomness comes from a single
-`mulberry32` generator created in `createState(scenario, seed)`, and every call site
+`mulberry32` generator created in `createRun(pack, seed)`, and every call site
 draws from it in a fixed order.
 
 ---

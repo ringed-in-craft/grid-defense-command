@@ -1,30 +1,20 @@
 /**
- * Scenarios describe a grid topology. They are plain data so anyone can author
- * one — a real substation layout, a simplified IEEE test bus, or a made-up mesh
- * — without touching engine code.
+ * Harbor region topology.
  *
- * node: { id, name, type, x, y, weight }
- *   type   'net'  external network (where attacks come from; not defensible)
- *          'soc'  control centre (draws power, does not carry it)
- *          'gen'  generation
- *          'sub'  substation
- *          'load' demand, with a `weight` proportional to criticality
- *   x, y   normalised 0..1 map coordinates
- * link: [a, b]  an undirected electrical/network path
- *
- * The default grid is deliberately meshed: standard n-1 intuition fails here,
- * and that is the lesson.
+ * Pure data. The default grid is deliberately meshed: standard n-1 intuition
+ * fails here, and that is the lesson. A node's criticality tells you far less
+ * about resilience than its position in the graph.
  */
 
-/** @typedef {{id:string,name:string,type:string,x:number,y:number,weight?:number}} ScenarioNode */
-/** @typedef {{id:string,name:string,blurb:string,nodes:ScenarioNode[],links:[string,string][]}} Scenario */
+/** @typedef {{id:string,name:string,type:string,x:number,y:number,weight?:number}} Asset */
+/** @typedef {{id:string,name:string,blurb:string,assets:Asset[],links:[string,string][]}} Topology */
 
-/** @type {Scenario} */
+/** @type {Topology} */
 export const HARBOR_REGION = {
   id: 'harbor-region',
   name: 'Harbor region',
   blurb: 'Two generation sites, five substations, a hospital and two cities.',
-  nodes: [
+  assets: [
     { id: 'INT', name: 'Internet', type: 'net', x: 0.06, y: 0.14 },
     { id: 'SOC', name: 'Control centre', type: 'soc', x: 0.28, y: 0.18 },
     { id: 'P1', name: 'Hydro dam', type: 'gen', x: 0.10, y: 0.62 },
@@ -45,9 +35,3 @@ export const HARBOR_REGION = {
     ['S5', 'S1'], ['S5', 'C2'], ['P2', 'S3']
   ]
 };
-
-/** All shipped scenarios. */
-export const SCENARIOS = { 'harbor-region': HARBOR_REGION };
-
-/** @type {Scenario} */
-export const DEFAULT_SCENARIO = HARBOR_REGION;

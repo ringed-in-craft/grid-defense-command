@@ -1,10 +1,16 @@
 /**
- * Deterministic PRNG. Every random decision in the simulation routes through
- * here so that a run is fully reproducible from its seed — that is what makes
- * the engine testable and what lets a finished run be replayed or shared.
+ * Deterministic PRNG.
  *
+ * Every random decision in the simulation routes through here so that a run is
+ * fully reproducible from its seed — that is what makes the engine testable, and
+ * what lets a finished run be replayed or shared by URL.
+ *
+ * This module is scenario-agnostic engine code: it has no idea what is being
+ * simulated.
+ */
+
+/**
  * mulberry32: 32-bit state, good enough distribution for a game, ~5 lines.
- *
  * @param {number} seed
  * @returns {() => number} generator returning floats in [0, 1)
  */

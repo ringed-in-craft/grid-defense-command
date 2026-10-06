@@ -5,8 +5,7 @@
  * markup, so adding a defender capability is a one-line change in sim.js.
  */
 
-import { ACTIONS, ACTION_ORDER, canApply, isBlind } from './sim.js';
-import { THREATS } from './threats.js';
+import { ACTIONS, ACTION_ORDER, canApply, isBlind, THREATS } from './sim.js';
 
 const $ = (id) => document.getElementById(id);
 

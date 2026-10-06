@@ -10,8 +10,7 @@
  * `import * as ns` would leave the namespace binding undefined in the bundle.
  */
 
-import { createState, step, applyAction, isBlind, ACTION_ORDER, ACTIONS } from './sim.js';
-import { SCENARIOS } from './scenarios.js';
+import { createState, step, applyAction, isBlind, ACTION_ORDER, ACTIONS, SCENARIOS } from './sim.js';
 import { draw } from './render.js';
 import {
   buildActionButtons,

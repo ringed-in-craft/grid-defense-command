@@ -1,20 +1,19 @@
 /**
- * The threat catalogue.
+ * The threat catalogue for the grid scenario.
  *
- * Every entry is modelled on a real intrusion technique and carries the
- * matching MITRE ATT&CK for ICS technique IDs, so the game's briefings are
- * checkable rather than hand-wavy.
+ * Every entry is modelled on a real intrusion technique and carries the matching
+ * MITRE ATT&CK for ICS technique IDs, so the in-game briefings are checkable
+ * rather than hand-wavy. The `brief` text is what the player sees the first time
+ * a technique appears, and it doubles as the teaching payload.
  *
  * fields:
  *   name     display name
  *   mitre    ATT&CK for ICS technique IDs this threat exercises
- *   rate     percentage points of "dwell" accumulated per second on a target
+ *   rate     percentage points of dwell accumulated per second on a target
  *   spreads  whether the threat moves laterally to adjacent nodes
  *   targets  node types it will be seeded on, or '*' for anything reachable
  *   brief    the teaching text, with the real-world incident it comes from
  */
-
-/** @typedef {'phish'|'ddos'|'ics'|'ransom'} ThreatId */
 
 export const THREATS = {
   phish: {

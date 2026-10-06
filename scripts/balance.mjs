@@ -8,8 +8,7 @@
  * a single run tells you very little.
  */
 
-import { createState, step, applyAction, powerFlow } from '../src/sim.js';
-import { HARBOR_REGION } from '../src/scenarios.js';
+import { createState, step, applyAction, powerFlow, HARBOR_REGION } from '../src/sim.js';
 
 const DT = 0.1;
 const MAX_SECONDS = 400;
